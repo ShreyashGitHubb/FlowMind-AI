@@ -16,7 +16,7 @@ export default function OrganizerDashboard() {
 
   // Sync to Firebase for Fan views
   useEffect(() => {
-    syncStadiumState(simulationState);
+    syncStadiumState(simulationState as unknown as Record<string, unknown>);
   }, [simulationState]);
 
   const toggleGate = (gateId: string) => {

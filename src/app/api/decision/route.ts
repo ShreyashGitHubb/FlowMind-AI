@@ -1,11 +1,11 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const { stadiumState, role = "fan", image } = await req.json();
 
-    const promptParts: unknown[] = [
+    const promptParts: (string | Part)[] = [
       `
       Act as "FlowMind AI", a predictive crowd autopilot for an Olympic Stadium.
       Current Role: ${role}
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent({
-      contents: [{ role: "user", parts: promptParts }],
+      contents: [{ role: "user", parts: promptParts as Part[] }],
       generationConfig: {
         responseMimeType: "application/json",
       }
