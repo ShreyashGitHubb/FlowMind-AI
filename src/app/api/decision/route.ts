@@ -6,11 +6,10 @@ export async function POST(req: Request) {
     const { stadiumState, role = "fan", image } = await req.json();
 
     const apiKey = process.env.GOOGLE_API_KEY;
+    let model;
     if (apiKey) {
-      // Initialize inside the route handler to grab runtime env variables correctly in Next.js standalone mode
-      const { GoogleGenerativeAI } = require("@google/generative-ai");
-      var genAI = new GoogleGenerativeAI(apiKey);
-      var model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const genAI = new GoogleGenerativeAI(apiKey);
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     }
 
     let promptParts: any[] = [
