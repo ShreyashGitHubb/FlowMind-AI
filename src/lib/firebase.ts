@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "your-api-key",
@@ -13,13 +14,27 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Auth Helpers
+export const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    console.error("Auth error:", error);
+    return null;
+  }
+};
+
+export const signOut = () => fbSignOut(auth);
 
 // Stadium State Helpers
 export const syncStadiumState = async (state: any) => {
   if (!db) return;
   try {
     const stadiumRef = doc(db, "stadium", "current_state");
-    // Deep copy to remove class methods if any
     await setDoc(stadiumRef, JSON.parse(JSON.stringify(state)));
   } catch (e) {
     console.error("Firebase sync error:", e);
@@ -40,3 +55,4 @@ export const triggerEvent = async (eventName: string, payload: any) => {
   const eventRef = doc(db, "stadium", "active_events");
   await updateDoc(eventRef, { [eventName]: payload });
 };
+
