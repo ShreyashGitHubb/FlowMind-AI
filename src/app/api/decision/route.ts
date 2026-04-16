@@ -5,13 +5,6 @@ export async function POST(req: Request) {
   try {
     const { stadiumState, role = "fan", image } = await req.json();
 
-    const apiKey = process.env.GOOGLE_API_KEY;
-    let model;
-    if (apiKey) {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    }
-
     let promptParts: any[] = [
       `
       Act as "FlowMind AI", a predictive crowd autopilot for an Olympic Stadium.
@@ -60,6 +53,9 @@ export async function POST(req: Request) {
         predicted_hotspots: ["Gate A", "Stall 3"]
       });
     }
+
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(promptParts);
     const text = result.response.text().trim();
