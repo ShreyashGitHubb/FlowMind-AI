@@ -127,30 +127,37 @@ export default function Home() {
   );
 }
 
-function StatItem({ icon, label, value, highlight = false }: any) {
+const StatItem = React.memo(({ icon, label, value, highlight = false }: any) => {
   return (
-    <div className="flex items-center gap-3">
-      <div className="opacity-40">{icon}</div>
+    <div className="flex items-center gap-3" aria-label={`${label} Stat`}>
+      <div className="opacity-40" aria-hidden="true">{icon}</div>
       <div>
         <p className="text-[9px] font-bold uppercase tracking-widest opacity-40">{label}</p>
         <p className={`text-sm font-black uppercase ${highlight ? 'text-primary' : 'text-white'}`}>{value}</p>
       </div>
     </div>
   );
-}
+});
+StatItem.displayName = 'StatItem';
 
-function IconButton({ Icon }: any) {
+const IconButton = React.memo(({ Icon }: any) => {
   return (
-    <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 hover:border-primary/20 transition-all text-white/60 hover:text-primary">
-      <Icon size={18} />
+    <button 
+      className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 hover:border-primary/20 transition-all text-white/60 hover:text-primary"
+      aria-label="System notification control"
+    >
+      <Icon size={18} aria-hidden="true" />
     </button>
   );
-}
+});
+IconButton.displayName = 'IconButton';
 
-function TabButton({ active, onClick, label, color = "primary" }: any) {
+const TabButton = React.memo(({ active, onClick, label, color = "primary" }: any) => {
   return (
     <button 
       onClick={onClick}
+      role="tab"
+      aria-selected={active}
       className={`relative px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all
         ${active ? (color === 'primary' ? 'text-primary' : 'text-secondary') : 'opacity-40 hover:opacity-100'}
       `}
@@ -164,5 +171,6 @@ function TabButton({ active, onClick, label, color = "primary" }: any) {
       )}
     </button>
   );
-}
+});
+TabButton.displayName = 'TabButton';
 

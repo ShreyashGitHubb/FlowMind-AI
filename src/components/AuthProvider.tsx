@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fbSignOut();
   };
 
-  const isOrganizer = user?.email?.includes('admin') || user?.email?.includes('organizer') || false;
+  const isOrganizer = user?.email?.includes('admin') || user?.email?.includes('organizer') || user?.email === 'shreyasvishwakarma00@gmail.com' || false;
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, isOrganizer }}>
