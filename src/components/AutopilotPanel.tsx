@@ -5,7 +5,7 @@ import { Bot, MapPin, Clock, AlertTriangle, ShieldCheck, Zap } from 'lucide-reac
 import { SimulationState } from '@/lib/simulator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { joinQueue, QueueTicket } from '@/lib/queue';
-import { Ticket, UserCheck, Coffee } from 'lucide-react';
+import { Coffee } from 'lucide-react';
 
 interface Decision {
   id: number;
@@ -24,7 +24,7 @@ interface AutopilotPanelProps {
 
 export default function AutopilotPanel({ simulationState, isAutopilotActive, onToggleAutopilot }: AutopilotPanelProps) {
   const [decisions, setDecisions] = useState<Decision[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
   const [activeTicket, setActiveTicket] = useState<QueueTicket | null>(null);
 
   const handleJoinQueue = (zoneId: string) => {
@@ -34,7 +34,6 @@ export default function AutopilotPanel({ simulationState, isAutopilotActive, onT
 
   const fetchDecisions = async () => {
     if (!isAutopilotActive) return;
-    setIsLoading(true);
     try {
       const res = await fetch('/api/decision', {
         method: 'POST',
@@ -45,8 +44,6 @@ export default function AutopilotPanel({ simulationState, isAutopilotActive, onT
       if (data.decisions) setDecisions(data.decisions);
     } catch (err) {
       console.error(err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -56,6 +53,7 @@ export default function AutopilotPanel({ simulationState, isAutopilotActive, onT
       const interval = setInterval(fetchDecisions, 10000); // Pulse every 10s
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAutopilotActive]);
 
   return (

@@ -5,7 +5,7 @@ export async function POST(req: Request) {
   try {
     const { stadiumState, role = "fan", image } = await req.json();
 
-    let promptParts: any[] = [
+    const promptParts: unknown[] = [
       `
       Act as "FlowMind AI", a predictive crowd autopilot for an Olympic Stadium.
       Current Role: ${role}

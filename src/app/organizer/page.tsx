@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStadiumSimulation } from '@/lib/simulator';
 import { syncStadiumState } from '@/lib/firebase';
 import StadiumMap from '@/components/StadiumMap';
-import { Shield, AlertCircle, Users, Zap, Lock, Unlock, Camera, User, HelpCircle } from 'lucide-react';
+import { Shield, Users, Zap, Lock, Camera, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/AuthProvider';
 
@@ -12,7 +12,7 @@ export default function OrganizerDashboard() {
   const { user, isOrganizer, logout } = useAuth();
   const { state: simulationState, setState: setSimulationState } = useStadiumSimulation(800, true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [visionResult, setVisionResult] = useState<any>(null);
+  const [visionResult, setVisionResult] = useState<Record<string, unknown> | null>(null);
 
   // Sync to Firebase for Fan views
   useEffect(() => {
@@ -194,7 +194,7 @@ export default function OrganizerDashboard() {
                        <Zap size={12} fill="currentColor" /> Visual Discrepancy Found
                      </p>
                      <p className="text-[10px] font-bold text-white/80 leading-relaxed italic">
-                        "{visionResult.visual_analysis}"
+                        &quot;{String(visionResult.visual_analysis)}&quot;
                      </p>
                   </div>
 

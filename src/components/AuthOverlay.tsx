@@ -51,6 +51,7 @@ export default function AuthOverlay({ children }: { children: React.ReactNode })
               <section className="space-y-4 w-full" aria-label="Authentication Options">
                 <button 
                   onClick={login}
+                  autoFocus
                   className="w-full btn-primary flex items-center justify-center gap-3 py-4 shadow-primary/20"
                   aria-label="Continue authenticating safely using Google Single Sign-on"
                 >

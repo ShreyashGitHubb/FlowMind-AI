@@ -31,7 +31,7 @@ export const signInWithGoogle = async () => {
 export const signOut = () => fbSignOut(auth);
 
 // Stadium State Helpers
-export const syncStadiumState = async (state: any) => {
+export const syncStadiumState = async (state: Record<string, unknown>) => {
   if (!db) return;
   try {
     const stadiumRef = doc(db, "stadium", "current_state");
@@ -41,7 +41,7 @@ export const syncStadiumState = async (state: any) => {
   }
 };
 
-export const listenToStadiumState = (callback: (state: any) => void) => {
+export const listenToStadiumState = (callback: (state: Record<string, unknown>) => void) => {
   const stadiumRef = doc(db, "stadium", "current_state");
   return onSnapshot(stadiumRef, (doc) => {
     if (doc.exists()) {
@@ -51,7 +51,7 @@ export const listenToStadiumState = (callback: (state: any) => void) => {
 };
 
 // Organizer Event Helpers
-export const triggerEvent = async (eventName: string, payload: any) => {
+export const triggerEvent = async (eventName: string, payload: Record<string, unknown>) => {
   const eventRef = doc(db, "stadium", "active_events");
   await updateDoc(eventRef, { [eventName]: payload });
 };

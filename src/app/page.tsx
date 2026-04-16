@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useStadiumSimulation } from '@/lib/simulator';
 import { listenToStadiumState } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Bell, User, Share2, Activity, Users, BarChart3, Calendar } from 'lucide-react';
-
+import { Zap, Bell, User, Activity, Users, Calendar } from 'lucide-react';
 // Lazy load heavy rendering components for maximum initial render efficiency
 const StadiumMap = dynamic(() => import('@/components/StadiumMap'), { 
   ssr: false, 
@@ -16,10 +15,6 @@ const AutopilotPanel = dynamic(() => import('@/components/AutopilotPanel'), {
   ssr: false,
   loading: () => <div className="w-full h-full animate-pulse bg-white/5 rounded-2xl border border-white/5" />
 });
-import { useStadiumSimulation } from '@/lib/simulator';
-import { listenToStadiumState } from '@/lib/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Bell, User, Share2, Activity, Users, BarChart3, Calendar } from 'lucide-react';
 
 export default function Home() {
   const [isPredictive, setIsPredictive] = useState(false);
@@ -27,12 +22,12 @@ export default function Home() {
   const [isFollowMode, setIsFollowMode] = useState(false); // Sync with Organizer
   
   // Local simulation for standalone testing
-  const { state: localState, setState: setLocalState } = useStadiumSimulation(500, !isFollowMode);
-  const [syncState, setSyncState] = useState<any>(null);
+  const { state: localState } = useStadiumSimulation(500, !isFollowMode);
+  const [syncState, setSyncState] = useState<Record<string, unknown> | null>(null);
 
   // Listen to Organizer's Master Simulation
   useEffect(() => {
-    let unsubscribe: any;
+    let unsubscribe: (() => void) | undefined;
     if (isFollowMode) {
       unsubscribe = listenToStadiumState((state) => {
         setSyncState(state);
@@ -42,6 +37,12 @@ export default function Home() {
   }, [isFollowMode]);
 
   const currentState = isFollowMode && syncState ? syncState : localState;
+
+  // React Render Optimization Callbacks
+  const toggleFollowMode = useCallback(() => setIsFollowMode(prev => !prev), []);
+  const setLiveFlow = useCallback(() => setIsPredictive(false), []);
+  const setPredictiveFlow = useCallback(() => setIsPredictive(true), []);
+  const toggleAutopilot = useCallback(() => setIsAutopilotActive(prev => !prev), []);
 
   return (
     <main className="flex flex-col h-screen bg-[#050505] text-foreground p-4 lg:p-6 gap-6 overflow-hidden">
@@ -72,7 +73,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
            {/* Follow Mode Toggle */}
            <button 
-             onClick={() => setIsFollowMode(!isFollowMode)}
+             onClick={toggleFollowMode}
              aria-pressed={isFollowMode}
              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all border ${isFollowMode ? 'border-secondary bg-secondary/10 text-secondary' : 'border-white/10 opacity-40 hover:opacity-100'}`}
            >
@@ -97,13 +98,13 @@ export default function Home() {
             <div className="flex gap-4">
               <TabButton 
                 active={!isPredictive} 
-                onClick={() => setIsPredictive(false)} 
+                onClick={setLiveFlow} 
                 label="Live Flow"
                 controls="stadium-map-panel"
               />
               <TabButton 
                 active={isPredictive} 
-                onClick={() => setIsPredictive(true)} 
+                onClick={setPredictiveFlow} 
                 label="Predicted (T+5)" 
                 color="secondary"
                 controls="stadium-map-panel"
@@ -111,7 +112,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div id="stadium-map-panel" role="tabpanel" className="flex-1 min-h-[400px]">
+          <div id="stadium-map-panel" role="tabpanel" tabIndex={0} aria-label="Interactive Live Stadium Density Map" className="flex-1 min-h-[400px]">
             <StadiumMap 
               agents={currentState.agents} 
               zones={currentState.zones} 
@@ -126,7 +127,7 @@ export default function Home() {
           <AutopilotPanel 
             simulationState={currentState} 
             isAutopilotActive={isAutopilotActive}
-            onToggleAutopilot={() => setIsAutopilotActive(!isAutopilotActive)}
+            onToggleAutopilot={toggleAutopilot}
           />
         </aside>
       </div>

@@ -22,7 +22,7 @@ export const joinQueue = (zoneId: string): QueueTicket => {
   };
 };
 
-export const checkQueueStatus = (ticket: QueueTicket, currentTime: number): 'pending' | 'active' | 'expired' => {
+export const checkQueueStatus = (): 'pending' | 'active' | 'expired' => {
   // Simple simulator time logic
   return 'active'; 
 };

@@ -11,7 +11,7 @@ interface StadiumMapProps {
   agents: Agent[];
   zones: Zone[];
   predictiveMode: boolean;
-  activeEvents?: { [key: string]: any };
+  activeEvents?: { [key: string]: unknown };
 }
 
 const STADIUM_CENTER = { lat: 51.5383, lng: -0.0166 };
@@ -31,7 +31,7 @@ export default function StadiumMap({ agents, zones, predictiveMode, activeEvents
     new HeatmapLayer({
       id: 'heatmap-layer',
       data: points,
-      getPosition: (d: any) => d,
+      getPosition: (d: [number, number]) => d,
       getWeight: 1,
       radiusPixels: 45,
       intensity: 1.2,
@@ -103,7 +103,7 @@ export default function StadiumMap({ agents, zones, predictiveMode, activeEvents
   );
 }
 
-function DeckGLOverlay({ layers }: { layers: any[] }) {
+function DeckGLOverlay({ layers }: { layers: unknown[] }) {
   const map = useMap();
   if (!map) return null;
 
