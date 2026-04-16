@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Bot, MapPin, Clock, AlertTriangle, ShieldCheck, Zap } from 'lucide-react';
 import { SimulationState } from '@/lib/simulator';
 import { motion, AnimatePresence } from 'framer-motion';
+import { joinQueue, QueueTicket } from '@/lib/queue';
+import { Ticket, UserCheck, Coffee } from 'lucide-react';
 
 interface Decision {
   id: number;
@@ -23,6 +25,12 @@ interface AutopilotPanelProps {
 export default function AutopilotPanel({ simulationState, isAutopilotActive, onToggleAutopilot }: AutopilotPanelProps) {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<QueueTicket | null>(null);
+
+  const handleJoinQueue = (zoneId: string) => {
+    const ticket = joinQueue(zoneId);
+    setActiveTicket(ticket);
+  };
 
   const fetchDecisions = async () => {
     if (!isAutopilotActive) return;
@@ -152,19 +160,39 @@ export default function AutopilotPanel({ simulationState, isAutopilotActive, onT
 
       {/* Queue System */}
       <div className="glass-card border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-        <div className="flex items-center gap-2 mb-4">
-          <ShieldCheck size={18} className="text-secondary" />
-          <h3 className="font-black uppercase tracking-widest text-sm">Virtual Vault Queue</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={18} className="text-secondary" />
+            <h3 className="font-black uppercase tracking-widest text-sm">Virtual Vault</h3>
+          </div>
+          {activeTicket && (
+            <span className="text-[10px] font-black text-secondary animate-pulse">SLOT ACTIVE</span>
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-            <span className="block text-[10px] opacity-40 uppercase font-bold mb-1">Stall 4 Slot</span>
-            <span className="text-sm font-black text-secondary">16:45 - 16:50</span>
-          </div>
-          <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center opacity-40">
-             <span className="block text-[10px] uppercase font-bold mb-1">Gate B Slot</span>
-             <span className="text-xs font-black">UNAVAILABLE</span>
-          </div>
+
+        <div className="space-y-3">
+          {activeTicket ? (
+            <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 text-center">
+              <span className="block text-[10px] opacity-60 uppercase font-bold mb-1">Your {activeTicket.zoneId} Reservation</span>
+              <span className="text-2xl font-black text-secondary">{activeTicket.slotStartTime}</span>
+              <p className="text-[9px] mt-2 opacity-40 uppercase">Show code at entry</p>
+            </div>
+          ) : (
+            simulationState.zones.filter(z => z.type === 'stall').map(zone => (
+              <div key={zone.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5">
+                <div className="flex items-center gap-2">
+                  <Coffee size={14} className="text-primary" />
+                  <span className="text-[10px] font-bold uppercase">{zone.name}</span>
+                </div>
+                <button 
+                  onClick={() => handleJoinQueue(zone.id)}
+                  className="px-3 py-1 rounded bg-primary/20 text-primary text-[9px] font-black uppercase hover:bg-primary hover:text-black transition-all"
+                >
+                  Join Queue
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -1,21 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useStadiumSimulation } from '@/lib/simulator';
+import React, { useState, useEffect } from 'react';
 import StadiumMap from '@/components/StadiumMap';
 import AutopilotPanel from '@/components/AutopilotPanel';
-import { Activity, BarChart3, Users, Zap, Calendar } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useStadiumSimulation } from '@/lib/simulator';
+import { listenToStadiumState } from '@/lib/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Bell, User, Share2, Activity, Users, BarChart3, Calendar } from 'lucide-react';
 
 export default function Home() {
-  const simulationState = useStadiumSimulation(800);
-  const [predictiveMode, setPredictiveMode] = useState(false);
-  const [isAutopilotActive, setIsAutopilotActive] = useState(false);
+  const [isPredictive, setIsPredictive] = useState(false);
+  const [isAutopilotActive, setIsAutopilotActive] = useState(true);
+  const [isFollowMode, setIsFollowMode] = useState(false); // Sync with Organizer
+  
+  // Local simulation for standalone testing
+  const { state: localState, setState: setLocalState } = useStadiumSimulation(500, !isFollowMode);
+  const [syncState, setSyncState] = useState<any>(null);
+
+  // Listen to Organizer's Master Simulation
+  useEffect(() => {
+    let unsubscribe: any;
+    if (isFollowMode) {
+      unsubscribe = listenToStadiumState((state) => {
+        setSyncState(state);
+      });
+    }
+    return () => unsubscribe?.();
+  }, [isFollowMode]);
+
+  const currentState = isFollowMode && syncState ? syncState : localState;
 
   return (
-    <main className="flex flex-col h-screen bg-[#050505] text-foreground p-6 gap-6 overflow-hidden">
+    <main className="flex flex-col h-screen bg-[#050505] text-foreground p-4 lg:p-6 gap-6 overflow-hidden">
       {/* Header Stat Bar */}
-      <header className="flex items-center justify-between glass p-4 rounded-2xl border-white/5 shadow-xl">
+      <header className="flex items-center justify-between glass p-4 rounded-2xl border-white/5 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary neon-glow">
@@ -23,35 +43,34 @@ export default function Home() {
              </div>
              <div>
                <h1 className="text-lg font-black tracking-tighter uppercase leading-none">FlowMind AI</h1>
-               <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Predictive Crowd Autopilot</p>
+               <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest">Fan Autopilot v1.5</p>
              </div>
           </div>
           
-          <div className="h-8 w-px bg-white/10 mx-2" />
+          <div className="h-8 w-px bg-white/10 mx-2 hidden md:block" />
           
-          <div className="flex gap-8">
-            <StatItem icon={<Users size={16}/>} label="Live Attendance" value={simulationState.agents.length.toString()} />
-            <StatItem icon={<Activity size={16}/>} label="Current Intensity" value={`${Math.min(100, simulationState.agents.length / 10).toFixed(0)}%`} />
-            <StatItem icon={<BarChart3 size={16}/>} label="Active Bottlenecks" value={simulationState.zones.filter(z => z.currentCount > z.capacity * 0.8).length.toString()} />
-            <StatItem icon={<Calendar size={16}/>} label="Event Phase" value={simulationState.phase.replace('-', ' ')} highlight />
+          <div className="hidden md:flex gap-8">
+            <StatItem icon={<Users size={16}/>} label="Attendance" value={currentState.agents.length.toString()} />
+            <StatItem icon={<Activity size={16}/>} label="Sync Status" value={isFollowMode ? "NETWORK" : "LOCAL"} highlight={isFollowMode} />
+            <StatItem icon={<Calendar size={16}/>} label="Event Phase" value={currentState.phase.replace('-', ' ')} highlight />
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-           {/* Prediction Toggle */}
-           <div className="flex items-center gap-2 p-1 bg-white/5 rounded-full border border-white/5">
-              <button 
-                onClick={() => setPredictiveMode(false)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${!predictiveMode ? 'bg-primary text-primary-foreground neon-glow' : 'opacity-40 hover:opacity-100'}`}
-              >
-                Live View
-              </button>
-              <button 
-                onClick={() => setPredictiveMode(true)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${predictiveMode ? 'bg-secondary text-secondary-foreground shadow-[0_0_15px_rgba(255,215,0,0.3)]' : 'opacity-40 hover:opacity-100'}`}
-              >
-                Predicted (T+5)
-              </button>
+           {/* Follow Mode Toggle */}
+           <button 
+             onClick={() => setIsFollowMode(!isFollowMode)}
+             className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all border ${isFollowMode ? 'border-secondary bg-secondary/10 text-secondary' : 'border-white/10 opacity-40 hover:opacity-100'}`}
+           >
+             {isFollowMode ? 'Following Organizer' : 'Standalone Mode'}
+           </button>
+
+           <div className="h-8 w-px bg-white/10 mx-2" />
+           <div className="flex gap-2">
+             <IconButton Icon={Bell} />
+             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center ml-2 border-primary/20">
+               <User size={20} className="text-primary" />
+             </div>
            </div>
         </div>
       </header>
@@ -60,24 +79,36 @@ export default function Home() {
       <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
         {/* Left: Map */}
         <section className="col-span-12 lg:col-span-8 flex flex-col gap-4">
-           <StadiumMap 
-             agents={simulationState.agents} 
-             zones={simulationState.zones} 
-             predictiveMode={predictiveMode} 
-           />
-           
-           {/* Event Log / Timeline */}
-           <div className="glass h-24 rounded-2xl border-white/5 p-4 flex items-center gap-6 overflow-x-auto no-scrollbar">
-              <TimelineEvent time="14:00" label="Entry Surge Detected" status="active" color="primary" />
-              <TimelineEvent time="14:30" label="Gate B Efficiency Drop" status="resolved" />
-              <TimelineEvent time="15:15" label="Halftime Rush Pred." status="incoming" color="secondary" />
-           </div>
+          <div className="flex items-center justify-between pb-2">
+            <div className="flex gap-4">
+              <TabButton 
+                active={!isPredictive} 
+                onClick={() => setIsPredictive(false)} 
+                label="Live Flow" 
+              />
+              <TabButton 
+                active={isPredictive} 
+                onClick={() => setIsPredictive(true)} 
+                label="Predicted (T+5)" 
+                color="secondary"
+              />
+            </div>
+          </div>
+          
+          <div className="flex-1 min-h-[400px]">
+            <StadiumMap 
+              agents={currentState.agents} 
+              zones={currentState.zones} 
+              predictiveMode={isPredictive}
+              activeEvents={currentState.activeEvents}
+            />
+          </div>
         </section>
 
         {/* Right: Autopilot Panel */}
         <aside className="col-span-12 lg:col-span-4 min-h-0">
           <AutopilotPanel 
-            simulationState={simulationState} 
+            simulationState={currentState} 
             isAutopilotActive={isAutopilotActive}
             onToggleAutopilot={() => setIsAutopilotActive(!isAutopilotActive)}
           />
@@ -86,7 +117,7 @@ export default function Home() {
 
       {/* Footer Branding */}
       <footer className="flex items-center justify-between px-2 opacity-30">
-        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Stadium Command v1.5_PRO</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">{isFollowMode ? 'REMOTE_COMMAND_SYNC_ACTIVE' : 'LOCAL_AUTOPILOT_ONLY'}</span>
         <div className="flex gap-4 text-[10px] font-bold">
            <span>SYSTEM_STABLE</span>
            <span>GEMINI_LINK_OK</span>
@@ -96,7 +127,7 @@ export default function Home() {
   );
 }
 
-function StatItem({ icon, label, value, highlight = false }: { icon: React.ReactNode, label: string, value: string, highlight?: boolean }) {
+function StatItem({ icon, label, value, highlight = false }: any) {
   return (
     <div className="flex items-center gap-3">
       <div className="opacity-40">{icon}</div>
@@ -108,15 +139,30 @@ function StatItem({ icon, label, value, highlight = false }: { icon: React.React
   );
 }
 
-function TimelineEvent({ time, label, status, color = 'white' }: { time: string, label: string, status: string, color?: string }) {
+function IconButton({ Icon }: any) {
   return (
-    <div className="flex-shrink-0 flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-medium opacity-40 font-mono">{time}</span>
-        <div className={`w-1.5 h-1.5 rounded-full ${color === 'primary' ? 'bg-primary' : color === 'secondary' ? 'bg-secondary' : 'bg-white/40'}`} />
-      </div>
-      <p className="text-xs font-black uppercase whitespace-nowrap">{label}</p>
-      <span className="text-[9px] font-bold uppercase opacity-30">{status}</span>
-    </div>
+    <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 hover:border-primary/20 transition-all text-white/60 hover:text-primary">
+      <Icon size={18} />
+    </button>
   );
 }
+
+function TabButton({ active, onClick, label, color = "primary" }: any) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`relative px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all
+        ${active ? (color === 'primary' ? 'text-primary' : 'text-secondary') : 'opacity-40 hover:opacity-100'}
+      `}
+    >
+      {label}
+      {active && (
+        <motion.div 
+          layoutId="activeTab"
+          className={`absolute bottom-0 left-0 w-full h-[2px] ${color === 'primary' ? 'bg-primary' : 'bg-secondary'}`}
+        />
+      )}
+    </button>
+  );
+}
+
