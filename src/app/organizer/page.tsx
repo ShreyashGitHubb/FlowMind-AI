@@ -12,7 +12,7 @@ export default function OrganizerDashboard() {
   const { user, isOrganizer, logout } = useAuth();
   const { state: simulationState, setState: setSimulationState } = useStadiumSimulation(800, true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [visionResult, setVisionResult] = useState<Record<string, unknown> | null>(null);
+  const [visionResult, setVisionResult] = useState<{ visual_analysis?: unknown, predicted_hotspots?: string[] } | null>(null);
 
   // Sync to Firebase for Fan views
   useEffect(() => {

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useStadiumSimulation } from '@/lib/simulator';
 import { listenToStadiumState } from '@/lib/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Zap, Bell, User, Activity, Users, Calendar } from 'lucide-react';
 // Lazy load heavy rendering components for maximum initial render efficiency
 const StadiumMap = dynamic(() => import('@/components/StadiumMap'), { 
@@ -23,14 +23,14 @@ export default function Home() {
   
   // Local simulation for standalone testing
   const { state: localState } = useStadiumSimulation(500, !isFollowMode);
-  const [syncState, setSyncState] = useState<Record<string, unknown> | null>(null);
+  const [syncState, setSyncState] = useState<import('@/lib/simulator').SimulationState | null>(null);
 
   // Listen to Organizer's Master Simulation
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     if (isFollowMode) {
       unsubscribe = listenToStadiumState((state) => {
-        setSyncState(state);
+        setSyncState(state as unknown as import('@/lib/simulator').SimulationState);
       });
     }
     return () => unsubscribe?.();

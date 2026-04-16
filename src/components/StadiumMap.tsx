@@ -77,7 +77,7 @@ export default function StadiumMap({ agents, zones, predictiveMode, activeEvents
 
           {/* Zones */}
           {zones.map(zone => (
-            <ZoneMarker key={zone.id} zone={zone} isClosed={activeEvents[`${zone.id}-closed`]} />
+            <ZoneMarker key={zone.id} zone={zone} isClosed={!!(activeEvents && activeEvents[`${zone.id}-closed`])} />
           ))}
         </Map>
       </APIProvider>
@@ -111,7 +111,8 @@ function DeckGLOverlay({ layers }: { layers: unknown[] }) {
     <DeckGL
       style={{ pointerEvents: 'none' }}
       viewState={{ ...STADIUM_CENTER, longitude: STADIUM_CENTER.lng, latitude: STADIUM_CENTER.lat, zoom: 17.5 }}
-      layers={layers}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      layers={layers as any[]}
     />
   );
 }
