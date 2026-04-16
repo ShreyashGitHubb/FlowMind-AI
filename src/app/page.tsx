@@ -1,8 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import StadiumMap from '@/components/StadiumMap';
-import AutopilotPanel from '@/components/AutopilotPanel';
+import dynamic from 'next/dynamic';
+import { useStadiumSimulation } from '@/lib/simulator';
+import { listenToStadiumState } from '@/lib/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Bell, User, Share2, Activity, Users, BarChart3, Calendar } from 'lucide-react';
+
+// Lazy load heavy rendering components for maximum initial render efficiency
+const StadiumMap = dynamic(() => import('@/components/StadiumMap'), { 
+  ssr: false, 
+  loading: () => <div className="w-full h-full flex items-center justify-center border border-white/5 rounded-2xl bg-white/5 animate-pulse"><div className="text-[10px] uppercase font-black tracking-[0.2em] opacity-40">Loading Topology Engine...</div></div> 
+});
+const AutopilotPanel = dynamic(() => import('@/components/AutopilotPanel'), { 
+  ssr: false,
+  loading: () => <div className="w-full h-full animate-pulse bg-white/5 rounded-2xl border border-white/5" />
+});
 import { useStadiumSimulation } from '@/lib/simulator';
 import { listenToStadiumState } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,8 +45,8 @@ export default function Home() {
 
   return (
     <main className="flex flex-col h-screen bg-[#050505] text-foreground p-4 lg:p-6 gap-6 overflow-hidden">
-      {/* Header Stat Bar */}
-      <header className="flex items-center justify-between glass p-4 rounded-2xl border-white/5 shadow-xl relative overflow-hidden">
+      {/* Header Stat Bar / Accessible Navigation */}
+      <nav aria-label="Main Navigation Framework" className="flex items-center justify-between glass p-4 rounded-2xl border-white/5 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
         
         <div className="flex items-center gap-6">
@@ -60,6 +73,7 @@ export default function Home() {
            {/* Follow Mode Toggle */}
            <button 
              onClick={() => setIsFollowMode(!isFollowMode)}
+             aria-pressed={isFollowMode}
              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all border ${isFollowMode ? 'border-secondary bg-secondary/10 text-secondary' : 'border-white/10 opacity-40 hover:opacity-100'}`}
            >
              {isFollowMode ? 'Following Organizer' : 'Standalone Mode'}
@@ -73,7 +87,7 @@ export default function Home() {
              </div>
            </div>
         </div>
-      </header>
+      </nav>
 
       {/* Main Grid */}
       <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
@@ -84,18 +98,20 @@ export default function Home() {
               <TabButton 
                 active={!isPredictive} 
                 onClick={() => setIsPredictive(false)} 
-                label="Live Flow" 
+                label="Live Flow"
+                controls="stadium-map-panel"
               />
               <TabButton 
                 active={isPredictive} 
                 onClick={() => setIsPredictive(true)} 
                 label="Predicted (T+5)" 
                 color="secondary"
+                controls="stadium-map-panel"
               />
             </div>
           </div>
           
-          <div className="flex-1 min-h-[400px]">
+          <div id="stadium-map-panel" role="tabpanel" className="flex-1 min-h-[400px]">
             <StadiumMap 
               agents={currentState.agents} 
               zones={currentState.zones} 
@@ -127,7 +143,14 @@ export default function Home() {
   );
 }
 
-const StatItem = React.memo(({ icon, label, value, highlight = false }: any) => {
+interface StatItemProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  highlight?: boolean;
+}
+
+const StatItem = React.memo(({ icon, label, value, highlight = false }: StatItemProps) => {
   return (
     <div className="flex items-center gap-3" aria-label={`${label} Stat`}>
       <div className="opacity-40" aria-hidden="true">{icon}</div>
@@ -140,7 +163,11 @@ const StatItem = React.memo(({ icon, label, value, highlight = false }: any) => 
 });
 StatItem.displayName = 'StatItem';
 
-const IconButton = React.memo(({ Icon }: any) => {
+interface IconButtonProps {
+  Icon: React.ElementType;
+}
+
+const IconButton = React.memo(({ Icon }: IconButtonProps) => {
   return (
     <button 
       className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 hover:border-primary/20 transition-all text-white/60 hover:text-primary"
@@ -152,12 +179,21 @@ const IconButton = React.memo(({ Icon }: any) => {
 });
 IconButton.displayName = 'IconButton';
 
-const TabButton = React.memo(({ active, onClick, label, color = "primary" }: any) => {
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  controls?: string;
+  color?: "primary" | "secondary";
+}
+
+const TabButton = React.memo(({ active, onClick, label, controls, color = "primary" }: TabButtonProps) => {
   return (
     <button 
       onClick={onClick}
       role="tab"
       aria-selected={active}
+      aria-controls={controls}
       className={`relative px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all
         ${active ? (color === 'primary' ? 'text-primary' : 'text-secondary') : 'opacity-40 hover:opacity-100'}
       `}
